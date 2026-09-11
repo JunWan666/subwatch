@@ -2,12 +2,7 @@
 
 > 一个**单文件、零依赖**的订阅流量实时监控面板。桌面端一屏看完全部信息，移动端 Tab 切换；内置深色 / 米色双主题一键切换。
 
-![桌面端 · 米色主题](screenshots/preview-desktop-beige.png)
-
-<p align="center">
-  <img src="screenshots/preview-desktop-dark.png" width="49%" alt="深色主题">
-  <img src="screenshots/preview-mobile-beige.png" width="30%" alt="移动端">
-</p>
+![SubWatch 订阅流量监控面板 · 米色主题](screenshots/preview-desktop-beige.png)
 
 ---
 
