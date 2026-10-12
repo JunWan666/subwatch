@@ -376,6 +376,8 @@ footer{flex:none;margin:0;font-size:11px;padding:0 0 2px;line-height:1.5}
 .usage-total b{font-family:var(--mono);font-weight:700;font-size:15.5px;color:var(--text);font-variant-numeric:tabular-nums}
 .usage-total .ut-sep{color:var(--text-faint);margin:0 1px}
 .usage-total .ut-total{color:var(--accent);text-shadow:0 0 16px rgba(56,214,255,.4)}
+.cycle-note{text-align:center;font-size:12px;color:var(--text-faint);margin:-6px 0 12px;
+  font-variant-numeric:tabular-nums;letter-spacing:.2px}
 .split{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:0}
 .split .item{border-radius:12px;background:rgba(8,16,32,.55);border:1px solid var(--line);padding:10px 13px}
 .split .item .lbl{font-size:10.5px;color:var(--text-faint);display:flex;align-items:center;gap:6px;margin-bottom:4px}
@@ -475,6 +477,7 @@ footer{flex:none;margin:0;font-size:11px;padding:0 0 2px;line-height:1.5}
   .gauge-center .pct{font-size:clamp(28px,8vw,38px)}
   .usage-total{font-size:13.5px;margin:9px 0 14px}
   .usage-total b{font-size:16px}
+  .cycle-note{font-size:11px;margin:-4px 0 10px}
   .cd-cell{padding:14px 4px;min-height:124px}
   .cd-cell .n{font-size:clamp(22px,6.8vw,30px)}
   .cd-cell .u{font-size:11px}
@@ -714,7 +717,7 @@ footer{color:var(--text-faint)}
     <div class="card b-gauge reveal" data-panel="overview">
       <div class="card-title">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M3 12h4l3-8 4 16 3-8h4"/></svg>
-        流量使用
+        本周期流量
       </div>
       <div class="gauge-wrap">
         <div class="gauge" id="gauge">
@@ -737,6 +740,7 @@ footer{color:var(--text-faint)}
       <div class="usage-total">
         <span>已用</span><b id="usedVal">--</b><span class="ut-sep">/</span><span>共</span><b class="ut-total" id="totalVal">--</b>
       </div>
+      <div class="cycle-note" id="cycleNote">--</div>
       <div class="split">
         <div class="item">
           <div class="lbl">▲ 上传</div>
@@ -888,6 +892,7 @@ footer{color:var(--text-faint)}
     var upload = 5.08 * GB, download = 10.39 * GB, total = 1 * TB;
     var used = upload + download;
     var expire = now + 25 * 86400 + 7 * 3600;
+    var cycleStart = expire - 30 * 86400;
     return {
       ok: true,
       subscription_url: "https://example.com/sub/demo-token.yaml",
@@ -895,6 +900,11 @@ footer{color:var(--text-faint)}
       expire: expire, updated_at: now - 38,
       used: Math.round(used), used_percent: used / total * 100,
       days_left: Math.floor((expire - now) / 86400),
+      cycle: {
+        start: cycleStart, end: expire, total: total, used: Math.round(used),
+        used_percent: used / total * 100,
+        days_left: Math.floor((expire - now) / 86400), reset_at: 0
+      },
       fmt: {
         upload: fmtBytes(upload), download: fmtBytes(download),
         total: fmtBytes(total), used: fmtBytes(used)
@@ -1004,7 +1014,15 @@ footer{color:var(--text-faint)}
     $("pctVal").textContent = (d.used_percent != null ? d.used_percent.toFixed(2) : "--") + "%";
     $("upVal").textContent = d.fmt.upload;
     $("downVal").textContent = d.fmt.download;
-    $("tagUsed").textContent = "已用 " + d.fmt.used + " / " + d.fmt.total;
+    $("tagUsed").textContent = "本周期 " + d.fmt.used + " / " + d.fmt.total;
+    var cyNote = $("cycleNote");
+    if(cyNote){
+      if(d.cycle && d.cycle.start){
+        cyNote.textContent = "本周期 " + fmtTime(d.cycle.start).slice(5) + " → " + fmtTime(d.cycle.end).slice(5) + " 重置";
+      } else {
+        cyNote.textContent = "";
+      }
+    }
     if($("usedVal")) $("usedVal").textContent = d.fmt.used;
     if($("totalVal")) $("totalVal").textContent = d.fmt.total;
     setGauge(d.used_percent || 0);
