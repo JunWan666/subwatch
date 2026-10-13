@@ -415,9 +415,10 @@ footer{flex:none;margin:0;font-size:11px;padding:0 0 2px;line-height:1.5}
 .btn-mini{padding:7px 12px;font-size:12px;border-radius:9px}
 
 /* ===== 订阅地址 ===== */
+.sub-url.revealed{color:var(--accent)}
 .sub-url-box{display:flex;align-items:center;gap:10px;background:rgba(3,8,18,.85);
   border:1px solid var(--line-strong);border-radius:13px;padding:15px 17px;margin:auto 0 16px}
-.sub-url{flex:1;font-family:var(--mono);font-size:13px;color:var(--text-dim);word-break:break-all;line-height:1.6}
+.sub-url{flex:1;font-family:var(--mono);font-size:12.5px;color:var(--text-dim);white-space:pre-line;word-break:break-all;line-height:1.6}
 .url-actions{display:flex;gap:11px;margin-bottom:auto}
 .url-actions .btn{flex:1;padding:13px 16px}
 .b-sub{position:relative}
@@ -810,7 +811,7 @@ footer{color:var(--text-faint)}
         </button>
         <button class="btn btn-ghost" id="btnOpen" disabled>
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><path d="M15 3h6v6"/><path d="M10 14 21 3"/></svg>
-          访问订阅
+          <span class="btn-label">显示</span>
         </button>
       </div>
       <div class="copy-feedback" id="copyMsg">已复制到剪贴板 ✨</div>
@@ -896,6 +897,8 @@ footer{color:var(--text-faint)}
     return {
       ok: true,
       subscription_url: "https://example.com/sub/demo-token.yaml",
+      subscription_url_auth: "https://example.com/sub/demo-token.yaml?k=demo-access-key",
+      subscription_url_masked: "example.com/sub/demo…oken.yaml\n?k=\u2022\u2022\u2022\u2022\u2022\u2022",
       upload: Math.round(upload), download: Math.round(download), total: total,
       expire: expire, updated_at: now - 38,
       used: Math.round(used), used_percent: used / total * 100,
@@ -1010,7 +1013,10 @@ footer{color:var(--text-faint)}
   function render(d){
     data = d;
     expireTs = d.expire;
-    $("subUrl").textContent = d.subscription_url;
+    subUrlRaw = d.subscription_url_auth || d.subscription_url;
+    subUrlMasked = d.subscription_url_masked || d.subscription_url;
+    subUrlShown = false;
+    paintSubUrl();
     $("pctVal").textContent = (d.used_percent != null ? d.used_percent.toFixed(2) : "--") + "%";
     $("upVal").textContent = d.fmt.upload;
     $("downVal").textContent = d.fmt.download;
@@ -1109,11 +1115,27 @@ footer{color:var(--text-faint)}
       }, 30000);
     });
 
+  // 订阅地址：默认打码，可显示/隐藏；复制始终是带凭据的完整链接
+  var subUrlRaw = "", subUrlMasked = "", subUrlShown = false;
+  function paintSubUrl(){
+    var el = $("subUrl");
+    if(!el) return;
+    el.textContent = subUrlShown ? subUrlRaw : subUrlMasked;
+    el.classList.toggle("revealed", subUrlShown);
+    var b = $("btnOpen");
+    if(b){ var t = b.querySelector(".btn-label"); if(t) t.textContent = subUrlShown ? "隐藏" : "显示"; }
+  }
+  var btnOpenEl = $("btnOpen");
+  if(btnOpenEl){
+    btnOpenEl.disabled = false;
+    btnOpenEl.addEventListener("click", function(){ subUrlShown = !subUrlShown; paintSubUrl(); });
+  }
+
   // 复制
   var copyMsg = $("copyMsg");
   var copyTimer = null;
   $("btnCopy").addEventListener("click", function(){
-    var url = $("subUrl").textContent;
+    var url = subUrlRaw || $("subUrl").textContent;
     var done = function(){ copyMsg.classList.add("show"); clearTimeout(copyTimer); copyTimer = setTimeout(function(){ copyMsg.classList.remove("show"); }, 2200); };
     if(navigator.clipboard && navigator.clipboard.writeText){
       navigator.clipboard.writeText(url).then(done, function(){ fallbackCopy(url); done(); });
